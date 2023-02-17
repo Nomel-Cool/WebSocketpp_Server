@@ -1,0 +1,4 @@
+Day1：
+
+1、配置好了OpenSSL，WebSocketpp，boost
+2、能够对9002端口进行单监听
