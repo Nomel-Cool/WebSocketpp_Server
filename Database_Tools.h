@@ -1,13 +1,18 @@
 #ifndef DATABASE_TOOLS_H
 #define DATABASE_TOOLS_H
-#include <mysql.h>
+
+
 #include <WinSock.h>
 #include <queue>
+
+#include <mysql.h>
+
 #include "msg_type.h"
 
 
 #pragma comment(lib,"wsock32.lib") 
 #pragma comment(lib,"libmysql.lib")
+
 class DB_Tool
 {
 public:

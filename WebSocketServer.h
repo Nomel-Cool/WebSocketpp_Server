@@ -6,12 +6,15 @@
 #include <codecvt>
 #include <queue>
 #include <map>
-#include "msg_type.h"
+
 // 不包含TLS Server
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <websocketpp/uri.hpp>
 #include <websocketpp/common/memory.hpp>
+
+#include "msg_type.h"
+
 
 // 包含TLS Server
 // #include <websocketpp/config/asio_server.hpp>
@@ -99,7 +102,7 @@ private:
 	server m_WebsocketServer;
 	vector<connection_metadata> v_linked; //连接句柄存储管理
 	queue<PatientData_t> p_Data;		//数据缓存
-	queue<string> recMsgList;				//通讯信息缓存
+	queue<string> rec_msg_list;				//通讯信息缓存
 	websocketpp::lib::shared_ptr<websocketpp::lib::thread> m_Thread; // 线程
 	queue<pair<int,string> > request_list;//请求等候表<v_linked[int],uid>
 };

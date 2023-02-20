@@ -1,10 +1,12 @@
 #ifndef SECURITY_H
 
 #define SECURITY_H
+
 #include <iostream>
 #include <cassert>
 #include <string>
 #include <vector>
+
 #include "openssl/md5.h"
 #include "openssl/sha.h"
 #include "openssl/des.h"

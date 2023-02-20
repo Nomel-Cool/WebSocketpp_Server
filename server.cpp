@@ -1,4 +1,6 @@
 #include "WebSocketServer.h"
+#include "Security.h"
+
 //数据处理工具
 static std::wstring string_to_wstring(const std::string& s)
 {
@@ -116,17 +118,17 @@ void WebsocketServer::OnMessage(websocketpp::connection_hdl hdl, message_ptr msg
 
 	try {
 		//msg要先放前面处理，不然线程一过就空了
-		string recMsg = msg->get_payload();		//读取负载信息
-		//这里应该有一个解密，recMsg
-
-		string strMsg = utf8_to_ansi(recMsg);	//处理中文乱码
-		string strReceive = "Receive: " + strMsg;
+		string rec_msg = msg->get_payload();						//读取负载信息
+		//string clear_msg = des_decrypt(rec_msg, "12345");			//ecb解密
+		//string str_msg = utf8_to_ansi(clear_msg);					//处理中文乱码
+		string str_msg = utf8_to_ansi(rec_msg);
+		string str_receive = "Receive: " + str_msg;
 		server::connection_ptr con = m_WebsocketServer.get_con_from_hdl(hdl);
 		string client_ip_port = con->get_remote_endpoint();
 
 		//若第一个字符是否为'/'，说明客户端发送了请求消息，应当读取对应数据库信息返回
 		//应当创建一个键值对<客户端在v_linked中的索引,请求消息的uid>
-		if (strMsg[0] == '/')
+		if (str_msg[0] == '/')
 		{
 			int pos = -1;
 			vector<connection_metadata>::iterator it = v_linked.begin();
@@ -139,7 +141,7 @@ void WebsocketServer::OnMessage(websocketpp::connection_hdl hdl, message_ptr msg
 				}
 			}
 			//如果没找到pos就会为-1，但这是不可能的，能发消息过来的客户端肯定被记录在案了
-			request_list.push(pair<int, string>(pos, recMsg.substr(1, recMsg.size() - 1)));
+			request_list.push(pair<int, string>(pos, str_msg.substr(1, str_msg.size() - 1)));
 			cout << request_list.size() << " request(s) hanging." << endl;	//UI处进行来消息提醒
 		}
 		
@@ -147,17 +149,17 @@ void WebsocketServer::OnMessage(websocketpp::connection_hdl hdl, message_ptr msg
 		//																													//m_WebsocketServer.send(hdl, strRespon, websocketpp::frame::opcode::text);
 
 		//当发送过来的是结构体的时候才会保存到结构体缓存器
-		else if (strMsg[0] == '#') {
+		else if (str_msg[0] == '#') {
 			m_accrod accord;
-			PatientData_t data = accord.decode(strMsg.substr(1, strMsg.size() - 1));	//实现text --》 struct
+			PatientData_t data = accord.decode(str_msg.substr(1, str_msg.size() - 1));	//实现text --》 struct
 			//防止数据库链接出现问题而导致丢包，先存到服务端自己的缓存里
 			p_Data.push(data);
 			cout << p_Data.size() << " data(s) unsaved." << endl;	//UI处进行来消息提醒
 		}
 
 		//else //若注释掉这一句，则只会把聊天消息写入文件，否则无差别消息存储（包括协议）
-			recMsgList.push(strReceive + " from " + client_ip_port);	//通讯信息存储
-		cout << recMsgList.size() << " message(s) unloaded." << endl;	//UI处进行来消息提醒
+		rec_msg_list.push(str_receive + " from " + client_ip_port);	//通讯信息存储
+		cout << rec_msg_list.size() << " message(s) unloaded totally." << endl;	//UI处进行来消息提醒
 	}
 	catch (websocketpp::exception const& e) {
 		cout << "error: " << e.what() << endl;
@@ -310,7 +312,7 @@ queue<PatientData_t>& WebsocketServer::get_msg_list()
 
 queue<string>& WebsocketServer::get_recv_msg()
 {
-	return recMsgList;
+	return rec_msg_list;
 }
 
 queue<pair<int, string> >& WebsocketServer::get_request_list()

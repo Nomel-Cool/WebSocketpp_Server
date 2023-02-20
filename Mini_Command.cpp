@@ -1,3 +1,96 @@
+#include "Command.h"
+
+void command(WebsocketServer& server, DB_Tool& dbt, File_Manager& f_m)
+{
+	//还没有做输入检查，比不上自动机写出来的，但加点检查总过得去
+	//一个命令台只管一个端口和线程
+	bool done = false;
+	m_accrod accord;
+	std::string input;
+	while (!done) {
+		std::cout << "Enter Command: ";
+		std::getline(std::cin, input);
+
+		if (input == "quit") {
+			done = true;
+		}
+		else if (input == "help") {
+			std::cout
+				<< "\nCommand List:\n"
+				<< "send <id message>\n"
+				<< "check: Show all the client status\n"
+				<< "help: Display this help text\n"
+				<< "write: Write the data buffer into the connected database\n"
+				<< "load: Write the message buffer into the system file\n"
+				<< "answer: Select the database to send the struct to the client\n"
+				<< "close <id reason>\n"
+				<< "quit: Exit the program\n"
+				<< std::endl;
+		}
+		else if (input.substr(0, 4) == "send") {
+			std::stringstream ss(input);
+
+			std::string cmd;
+			int id = 0;
+			std::string message;
+			//stringstream 是在里面模拟一次输入，遇到空格就会截停一次，从而实现空格制导的命令模式
+			ss >> cmd;
+			ss >> id;
+			std::getline(ss, message);
+
+			server.Send(id, message);
+		}
+		else if (input.substr(0, 5) == "close") {
+			std::stringstream ss(input);
+
+			std::string cmd;
+			int id = 0;
+			std::string reason;
+			//stringstream 是在里面模拟一次输入，遇到空格就会截停一次，从而实现空格制导的命令模式
+			ss >> cmd;
+			ss >> id;
+			std::getline(ss, reason);
+
+			server.Close(id, reason);
+		}
+		else if (input.substr(0, 5) == "check") {
+			server.Check();
+		}
+		else if (input.substr(0, 5) == "write") {
+			dbt.buffer_to_database(server.get_msg_list());
+		}
+		else if (input.substr(0, 4) == "load") {
+			f_m.buffer_to_file("F:\\WorkPlace\\VS\\WebSocketpp_Server_Test\\write_test.txt", server.get_recv_msg());
+		}
+		else if (input.substr(0, 6) == "answer") {
+			auto& Q = server.get_request_list();
+			while (Q.size())
+			{
+				PatientData_t data;
+				auto info = Q.front();
+				if (dbt.DB_Read(data, info.second)) {
+					string message = accord.encode(data);
+					server.Send(info.first, '#'+ message);
+				}
+				Q.pop();
+				printf("The rest of the unanswer list: %zd\n", Q.size());
+			}
+		}
+		else if (input.substr(0, 4) == "quit") {
+			done = true;
+		}
+		else {
+			std::cout << "> Unrecognized Command" << std::endl;
+		}
+	}
+}
+
+
+
+
+
+
+
 //#include "WebSocketServer.h"
 //#include "Database_Tools.h"
 //
@@ -228,91 +321,3 @@
 //	std::cout << "解密字符： " << std::endl;
 //	std::cout << decryptText << std::endl;
 //	*/
-
-
-#include "Command.h"
-
-void command(WebsocketServer& server, DB_Tool& dbt, File_Manager& f_m)
-{
-	//还没有做输入检查，比不上自动机写出来的，但加点检查总过得去
-	//一个命令台只管一个端口和线程
-	bool done = false;
-	m_accrod accord;
-	std::string input;
-	while (!done) {
-		std::cout << "Enter Command: ";
-		std::getline(std::cin, input);
-
-		if (input == "quit") {
-			done = true;
-		}
-		else if (input == "help") {
-			std::cout
-				<< "\nCommand List:\n"
-				<< "send <id message>\n"
-				<< "check: Show all the client status\n"
-				<< "help: Display this help text\n"
-				<< "write: Write the data buffer into the connected database\n"
-				<< "load: Write the message buffer into the system file\n"
-				<< "answer: Select the database to send the struct to the client\n"
-				<< "close <id reason>\n"
-				<< "quit: Exit the program\n"
-				<< std::endl;
-		}
-		else if (input.substr(0, 4) == "send") {
-			std::stringstream ss(input);
-
-			std::string cmd;
-			int id = 0;
-			std::string message;
-			//stringstream 是在里面模拟一次输入，遇到空格就会截停一次，从而实现空格制导的命令模式
-			ss >> cmd;
-			ss >> id;
-			std::getline(ss, message);
-
-			server.Send(id, message);
-		}
-		else if (input.substr(0, 5) == "close") {
-			std::stringstream ss(input);
-
-			std::string cmd;
-			int id = 0;
-			std::string reason;
-			//stringstream 是在里面模拟一次输入，遇到空格就会截停一次，从而实现空格制导的命令模式
-			ss >> cmd;
-			ss >> id;
-			std::getline(ss, reason);
-
-			server.Close(id, reason);
-		}
-		else if (input.substr(0, 5) == "check") {
-			server.Check();
-		}
-		else if (input.substr(0, 5) == "write") {
-			dbt.buffer_to_database(server.get_msg_list());
-		}
-		else if (input.substr(0, 4) == "load") {
-			f_m.buffer_to_file("F:\\WorkPlace\\VS\\WebSocketpp_Server_Test\\write_test.txt", server.get_recv_msg());
-		}
-		else if (input.substr(0, 6) == "answer") {
-			auto& Q = server.get_request_list();
-			while (Q.size())
-			{
-				PatientData_t data;
-				auto info = Q.front();
-				if (dbt.DB_Read(data, info.second)) {
-					string message = accord.encode(data);
-					server.Send(info.first, '#'+ message);
-				}
-				Q.pop();
-				printf("The rest of the unanswer list: %zd\n", Q.size());
-			}
-		}
-		else if (input.substr(0, 4) == "quit") {
-			done = true;
-		}
-		else {
-			std::cout << "> Unrecognized Command" << std::endl;
-		}
-	}
-}

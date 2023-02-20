@@ -1,7 +1,10 @@
-#include "Database_Tools.h"
 #include <stdio.h>
+
 #include <iostream>
 #include <vector>
+
+#include "Database_Tools.h"
+
 DB_Tool::DB_Tool(string host, string user, string psw, string database, unsigned int port)
 {
 	this->host = host.c_str();
